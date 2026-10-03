@@ -1,6 +1,8 @@
-import 'package:echo_fix/features/domian/entities/user_role.dart';
-import 'package:echo_fix/features/domian/entities/users.dart';
-import 'package:echo_fix/features/domian/repositories/user_repository.dart';
+import 'package:echo_fix/features/data/models/user_model.dart';
+import 'package:echo_fix/features/data/models/user_role_model.dart';
+import 'package:echo_fix/features/domain/entities/user_role.dart';
+import 'package:echo_fix/features/domain/entities/users.dart';
+import 'package:echo_fix/features/domain/repositories/user_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UserRepositoryImpl implements UserRepository {
@@ -9,25 +11,29 @@ class UserRepositoryImpl implements UserRepository {
   UserRepositoryImpl({required this.supabase});
   @override
   Future<Users?> getCurrentUser() async {
-    final currentUser = supabase.auth.currentUser;
+    try {
+      final currentUser = supabase.auth.currentUser;
 
-    if (currentUser == null) {
-      return null;
+      if (currentUser == null) {
+        return null;
+      }
+
+      final response = await supabase
+          .from('users')
+          .select()
+          .eq('id', currentUser.id)
+          .single();
+
+      return UserModel(
+        userId: response['id'],
+        username: response['username'],
+        email: response['email'],
+        name: response['name'],
+        createdAt: DateTime.parse(response['created_at']),
+      );
+    } catch (e) {
+      throw Exception('Error al obtener el usuario actual: $e');
     }
-
-    final response = await supabase
-        .from('users')
-        .select()
-        .eq('id', currentUser.id)
-        .single();
-
-    return Users(
-      userId: response['id'],
-      username: response['username'],
-      email: response['email'],
-      name: response['name'],
-      createdAt: DateTime.parse(response['created_at']),
-    );
   }
 
   @override
@@ -35,38 +41,49 @@ class UserRepositoryImpl implements UserRepository {
     required String userName,
     required String password,
   }) async {
-    final response = await supabase
-        .from('users')
-        .select('email')
-        .eq('username', userName)
-        .single();
-    await supabase.auth.signInWithPassword(
-      password: password,
-      email: response['email'],
-    );
+    try {
+      final response = await supabase
+          .from('users')
+          .select('email')
+          .eq('username', userName)
+          .single();
+      await supabase.auth.signInWithPassword(
+        password: password,
+        email: response['email'],
+      );
+    } catch (e) {
+      throw Exception('Error al iniciar sesión: $e');
+    }
   }
 
   @override
   Future<void> signOut() async {
-    final SupabaseClient supabaseClient = Supabase.instance.client;
-    await supabaseClient.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      throw Exception('Error al cerrar sesión: $e');
+    }
   }
 
   @override
   Future<List<UserRole>> getUserRoles() async {
-    final currentUser = supabase.auth.currentUser;
+    try {
+      final currentUser = supabase.auth.currentUser;
 
-    if (currentUser == null) {
-      return [];
+      if (currentUser == null) {
+        return [];
+      }
+
+      final response = await supabase
+          .from('user_roles')
+          .select()
+          .eq('user_id', currentUser.id);
+
+      return response.map<UserRole>((role) {
+        return UserRoleModel(roleId: role['user_id'], roleName: role['role']);
+      }).toList();
+    } catch (e) {
+      throw Exception('Error al obtener los roles del usuario: $e');
     }
-
-    final response = await supabase
-        .from('user_roles')
-        .select()
-        .eq('user_id', currentUser.id);
-
-    return response.map<UserRole>((role) {
-      return UserRole(roleId: role['user_id'], roleName: role['role']);
-    }).toList();
   }
 }

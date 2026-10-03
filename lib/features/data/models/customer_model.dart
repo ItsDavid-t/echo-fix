@@ -1,45 +1,54 @@
-import 'package:echo_fix/features/domian/entities/customer.dart';
+import 'package:echo_fix/features/domain/entities/customer.dart';
 
-class CustomerModel {
-  final int customerId;
-  final String customerName;
-  final String customerPhone;
-  final String customerLocation;
-
+class CustomerModel extends Customer {
   CustomerModel({
-    required this.customerId,
-    required this.customerName,
-    required this.customerPhone,
-    required this.customerLocation,
+    required super.customerId,
+    required super.customerName,
+    required super.customerEmail,
+    required super.customerCity,
+    required super.customerWorkplace,
+    required super.customerCreatedAt,
   });
 
-  CustomerModel.fromJson(Map<String, dynamic> json)
-    : customerId = json['customerId'] as int,
-      customerName = json['customerName'] as String,
-      customerPhone = json['customerPhone'] as String,
-      customerLocation = json['customerLocation'] as String;
-
+  factory CustomerModel.fromJson(Map<String, dynamic> json) {
+    return CustomerModel(
+      customerId: json['id'] as int,
+      customerName: json['name'] as String,
+      customerCity: json['city'] as String,
+      customerWorkplace: json['workplace'] as String,
+      customerEmail: json['email'] as String,
+      customerCreatedAt: json['createdAt'] as String,
+    );
+  }
   Map<String, dynamic> toJson() {
     return {
-      'customerId': customerId,
-      'customerName': customerName,
-      'customerPhone': customerPhone,
-      'customerLocation': customerLocation,
+      'id': customerId,
+      'name': customerName,
+      'city': customerCity,
+      'workplace': customerWorkplace,
+      'email': customerEmail,
+      'createdAt': customerCreatedAt,
     };
   }
 
-  CustomerModel.fromEntity(Customer customer)
-    : customerId = customer.customerId,
-      customerName = customer.customerName,
-      customerPhone = customer.customerPhone,
-      customerLocation = customer.customerLocation;
-
+  factory CustomerModel.fromEntity(Customer customer) {
+    return CustomerModel(
+      customerId: customer.customerId,
+      customerName: customer.customerName,
+      customerCity: customer.customerCity,
+      customerWorkplace: customer.customerWorkplace,
+      customerEmail: customer.customerEmail,
+      customerCreatedAt: customer.customerCreatedAt,
+    );
+  }
   Customer toEntity() {
     return Customer(
       customerId: customerId,
       customerName: customerName,
-      customerPhone: customerPhone,
-      customerLocation: customerLocation,
+      customerCity: customerCity,
+      customerWorkplace: customerWorkplace,
+      customerEmail: customerEmail,
+      customerCreatedAt: customerCreatedAt,
     );
   }
 }

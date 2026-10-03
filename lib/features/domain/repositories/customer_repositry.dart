@@ -1,4 +1,4 @@
-import 'package:echo_fix/features/domian/entities/customer.dart';
+import 'package:echo_fix/features/domain/entities/customer.dart';
 
 abstract class CustomerRepository {
   Future<void> addCustomer(Customer customer);

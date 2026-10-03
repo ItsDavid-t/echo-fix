@@ -1,22 +1,22 @@
-import 'package:echo_fix/features/domian/entities/user_role.dart';
+import 'package:echo_fix/features/domain/entities/user_role.dart';
 
-class UserRoleModel {
-  final int roleId;
-  final String roleName;
+class UserRoleModel extends UserRole {
+  UserRoleModel({required super.roleId, required super.roleName});
 
-  UserRoleModel({required this.roleId, required this.roleName});
-
-  UserRoleModel.fromJson(Map<String, dynamic> json)
-    : roleId = json['roleId'] as int,
-      roleName = json['roleName'] as String;
-
-  Map<String, dynamic> toJson() {
-    return {'roleId': roleId, 'roleName': roleName};
+  factory UserRoleModel.fromJson(Map<String, dynamic> json) {
+    return UserRoleModel(
+      roleId: json['user_id'] as int,
+      roleName: json['role'] as String,
+    );
   }
 
-  UserRoleModel.fromEntity(UserRole userRole)
-    : roleId = userRole.roleId,
-      roleName = userRole.roleName;
+  Map<String, dynamic> toJson() {
+    return {'user_id': roleId, 'role': roleName};
+  }
+
+  factory UserRoleModel.fromEntity(UserRole userRole) {
+    return UserRoleModel(roleId: userRole.roleId, roleName: userRole.roleName);
+  }
 
   UserRole toEntity() {
     return UserRole(roleId: roleId, roleName: roleName);

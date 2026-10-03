@@ -1,5 +1,5 @@
-import 'package:echo_fix/features/domian/entities/users.dart';
-import 'package:echo_fix/features/domian/entities/user_role.dart';
+import 'package:echo_fix/features/domain/entities/users.dart';
+import 'package:echo_fix/features/domain/entities/user_role.dart';
 
 abstract class UserRepository {
   Future<Users?> getCurrentUser();

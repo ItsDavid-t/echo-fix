@@ -1,26 +1,23 @@
-import 'package:echo_fix/features/domian/entities/users.dart';
+import 'package:echo_fix/features/domain/entities/users.dart';
 
-class UserModel {
-  final int userId;
-  final String name;
-  final String email;
-  final String username;
-  final DateTime createdAt;
-
+class UserModel extends Users {
   UserModel({
-    required this.userId,
-    required this.name,
-    required this.email,
-    required this.username,
-    required this.createdAt,
+    required super.userId,
+    required super.name,
+    required super.username,
+    required super.email,
+    required super.createdAt,
   });
 
-  UserModel.fromJson(Map<String, dynamic> json)
-    : userId = json['userId'] as int,
-      name = json['name'] as String,
-      email = json['email'] as String,
-      username = json['username'] as String,
-      createdAt = json['createdAt'] as DateTime;
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      userId: json['id'] as int,
+      name: json['name'] as String,
+      username: json['username'] as String,
+      email: json['email'] as String,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -28,16 +25,19 @@ class UserModel {
       'name': name,
       'email': email,
       'username': username,
-      'createdAt': createdAt,
+      'created_at': createdAt.toIso8601String(),
     };
   }
 
-  UserModel.fromEntity(Users user)
-    : userId = user.userId,
-      name = user.name,
-      email = user.email,
-      username = user.username,
-      createdAt = user.createdAt;
+  factory UserModel.fromEntity(Users user) {
+    return UserModel(
+      userId: user.userId,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      createdAt: user.createdAt,
+    );
+  }
 
   Users toEntity() {
     return Users(

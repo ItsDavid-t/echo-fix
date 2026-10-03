@@ -1,63 +1,66 @@
-import 'package:echo_fix/features/domian/entities/device.dart';
+import 'package:echo_fix/features/domain/entities/device.dart';
 
-class DeviceModel {
-  final int deviceId;
-  final String deviceName;
-  final String deviceType;
-  final String deviceStatus;
-  final String deviceProblem;
-  final String deviceImage;
-  final String deviceNumberID;
-
+class DeviceModel extends Device {
   DeviceModel({
-    required this.deviceId,
-    required this.deviceName,
-    required this.deviceType,
-    required this.deviceStatus,
-    required this.deviceProblem,
-    required this.deviceImage,
-    required this.deviceNumberID,
+    required super.customerId,
+    required super.deviceId,
+    required super.deviceName,
+    required super.deviceType,
+    required super.deviceStatus,
+    required super.deviceImage,
+    required super.deviceNumberID,
+    required super.createdAt,
   });
 
-  DeviceModel.fromJson(Map<String, dynamic> json)
-    : deviceId = json['deviceId'] as int,
-      deviceName = json['deviceName'] as String,
-      deviceType = json['deviceType'] as String,
-      deviceStatus = json['deviceStatus'] as String,
-      deviceProblem = json['deviceProblem'] as String,
-      deviceImage = json['deviceImage'] as String,
-      deviceNumberID = json['deviceNumberID'] as String;
+  factory DeviceModel.fromJson(Map<String, dynamic> json) {
+    return DeviceModel(
+      customerId: json['customer_id'],
+      deviceId: json['device_id'],
+      deviceName: json['name'],
+      deviceType: json['type'],
+      deviceStatus: json['status'],
+      deviceImage: json['image_url'],
+      deviceNumberID: json['inventory_number'],
+      createdAt: json['created_at'],
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
-      'deviceId': deviceId,
-      'deviceName': deviceName,
-      'deviceType': deviceType,
-      'deviceStatus': deviceStatus,
-      'deviceProblem': deviceProblem,
-      'deviceImage': deviceImage,
-      'deviceNumberID': deviceNumberID,
+      'device_id': deviceId,
+      'customer_id': customerId,
+      'name': deviceName,
+      'type': deviceType,
+      'status': deviceStatus,
+      'image_url': deviceImage,
+      'inventory_number': deviceNumberID,
+      'created_at': createdAt,
     };
   }
 
-  DeviceModel.fromEntity(Device device)
-    : deviceId = device.deviceId,
-      deviceName = device.deviceName,
-      deviceType = device.deviceType,
-      deviceStatus = device.deviceStatus,
-      deviceProblem = device.deviceProblem,
-      deviceImage = device.deviceImage,
-      deviceNumberID = device.deviceNumberID;
+  factory DeviceModel.fromEntity(Device device) {
+    return DeviceModel(
+      customerId: device.customerId,
+      deviceId: device.deviceId,
+      deviceName: device.deviceName,
+      deviceType: device.deviceType,
+      deviceStatus: device.deviceStatus,
+      deviceImage: device.deviceImage,
+      deviceNumberID: device.deviceNumberID,
+      createdAt: device.createdAt,
+    );
+  }
 
   Device toEntity() {
     return Device(
       deviceId: deviceId,
+      customerId: customerId,
       deviceName: deviceName,
       deviceType: deviceType,
       deviceStatus: deviceStatus,
-      deviceProblem: deviceProblem,
       deviceImage: deviceImage,
       deviceNumberID: deviceNumberID,
+      createdAt: createdAt,
     );
   }
 }
