@@ -6,7 +6,7 @@ class Device {
   final String deviceStatus;
   final String deviceImage;
   final String deviceNumberID;
-  final String createdAt;
+  final DateTime createdAt;
 
   Device({
     required this.customerId,

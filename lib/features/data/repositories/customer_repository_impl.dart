@@ -1,60 +1,60 @@
+import 'package:echo_fix/core/error/failure.dart';
+import 'package:echo_fix/features/data/datasources/customer_remote_data_source_impl.dart';
 import 'package:echo_fix/features/data/models/customer_model.dart';
 import 'package:echo_fix/features/domain/entities/customer.dart';
 import 'package:echo_fix/features/domain/repositories/customer_repositry.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:fpdart/fpdart.dart';
 
 class CustomerRepositoryImpl implements CustomerRepository {
-  final SupabaseClient supabase;
-  CustomerRepositoryImpl({required this.supabase});
+  final CustomerRemoteDataSourceImpl remoteDataSource;
+  CustomerRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<void> addCustomer(Customer customer) async {
+  Future<Either<Failure, void>> addCustomer(Customer customer) async {
     try {
-      await supabase.from('customer').insert({
-        'name': customer.customerName,
-        'email': customer.customerEmail,
-        'city': customer.customerCity,
-        'workplace': customer.customerWorkplace,
-        'created_at': customer.customerCreatedAt,
+      final customerModel = CustomerModel.fromEntity(customer);
+      return await remoteDataSource
+          .addCustomer(customerModel)
+          .then((_) => const Right(null));
+    } catch (e) {
+      return Left(ServerFailure('Error al agregar el cliente: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteCustomer(int customerId) async {
+    try {
+      return await remoteDataSource
+          .deleteCustomer(customerId)
+          .then((_) => const Right(null));
+    } catch (e) {
+      return Left(ServerFailure('Error al eliminar el cliente: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Customer>>> getAllCustomers() async {
+    try {
+      return await remoteDataSource.getAllCustomers().then((customerModels) {
+        final customers = customerModels
+            .map((model) => model.toEntity())
+            .toList();
+        return Right(customers);
       });
     } catch (e) {
-      throw Exception('Error al agregar el cliente: $e');
+      return Left(ServerFailure('Error al obtener los clientes: $e'));
     }
   }
 
   @override
-  Future<void> deleteCustomer(int customerId) async {
+  Future<Either<Failure, void>> updateCustomer(Customer customer) async {
     try {
-      await supabase.from('customer').delete().eq('customer_id', customerId);
+      final customerModel = CustomerModel.fromEntity(customer);
+      return remoteDataSource
+          .updateCustomer(customerModel)
+          .then((_) => const Right(null));
     } catch (e) {
-      throw Exception('Error al eliminar el cliente: $e');
-    }
-  }
-
-  @override
-  Future<List<Customer>> getAllCustomers() async {
-    try {
-      final response = await supabase.from('customer').select();
-      return response.map((json) => CustomerModel.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Error al obtener los clientes: $e');
-    }
-  }
-
-  @override
-  Future<void> updateCustomer(Customer customer) {
-    try {
-      return supabase
-          .from('customer')
-          .update({
-            'name': customer.customerName,
-            'email': customer.customerEmail,
-            'city': customer.customerCity,
-            'workplace': customer.customerWorkplace,
-          })
-          .eq('customer_id', customer.customerId);
-    } catch (e) {
-      throw Exception('Error al actualizar el cliente: $e');
+      return Left(ServerFailure('Error al actualizar el cliente: $e'));
     }
   }
 }

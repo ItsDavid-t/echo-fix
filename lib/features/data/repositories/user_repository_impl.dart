@@ -1,89 +1,55 @@
-import 'package:echo_fix/features/data/models/user_model.dart';
-import 'package:echo_fix/features/data/models/user_role_model.dart';
+import 'package:echo_fix/core/error/failure.dart';
+import 'package:echo_fix/features/data/datasources/user_remote_data_source.dart';
 import 'package:echo_fix/features/domain/entities/user_role.dart';
 import 'package:echo_fix/features/domain/entities/users.dart';
 import 'package:echo_fix/features/domain/repositories/user_repository.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:fpdart/fpdart.dart';
 
 class UserRepositoryImpl implements UserRepository {
-  final SupabaseClient supabase;
+  final UserRemoteDataSource remoteDataSource;
+  UserRepositoryImpl({required this.remoteDataSource});
 
-  UserRepositoryImpl({required this.supabase});
   @override
-  Future<Users?> getCurrentUser() async {
+  Future<Either<Failure, List<UserRole>>> getUserRoles() async {
     try {
-      final currentUser = supabase.auth.currentUser;
-
-      if (currentUser == null) {
-        return null;
-      }
-
-      final response = await supabase
-          .from('users')
-          .select()
-          .eq('id', currentUser.id)
-          .single();
-
-      return UserModel(
-        userId: response['id'],
-        username: response['username'],
-        email: response['email'],
-        name: response['name'],
-        createdAt: DateTime.parse(response['created_at']),
-      );
+      final userRoles = await remoteDataSource.getUserRoles();
+      final roles = userRoles.map((role) => role.toEntity()).toList();
+      return Right(roles);
     } catch (e) {
-      throw Exception('Error al obtener el usuario actual: $e');
+      return Left(ServerFailure('Error al obenter el rol del usuario'));
     }
   }
 
   @override
-  Future<void> signIn({
+  Future<Either<Failure, void>> signIn({
     required String userName,
     required String password,
   }) async {
     try {
-      final response = await supabase
-          .from('users')
-          .select('email')
-          .eq('username', userName)
-          .single();
-      await supabase.auth.signInWithPassword(
-        password: password,
-        email: response['email'],
-      );
+      await remoteDataSource.signIn(userName: userName, password: password);
+      return Right(null);
     } catch (e) {
-      throw Exception('Error al iniciar sesión: $e');
+      return Left(ServerFailure('Error al iniciar sesión'));
     }
   }
 
   @override
-  Future<void> signOut() async {
+  Future<Either<Failure, void>> signOut() async {
     try {
-      await supabase.auth.signOut();
+      return remoteDataSource.signOut().then((_) => const Right(null));
     } catch (e) {
-      throw Exception('Error al cerrar sesión: $e');
+      return Left(ServerFailure('Error al cerrar sesión'));
     }
   }
 
   @override
-  Future<List<UserRole>> getUserRoles() async {
+  Future<Either<Failure, Users?>> getCurrentUser() async {
     try {
-      final currentUser = supabase.auth.currentUser;
-
-      if (currentUser == null) {
-        return [];
-      }
-
-      final response = await supabase
-          .from('user_roles')
-          .select()
-          .eq('user_id', currentUser.id);
-
-      return response.map<UserRole>((role) {
-        return UserRoleModel(roleId: role['user_id'], roleName: role['role']);
-      }).toList();
+      final user = await remoteDataSource.getCurrentUser();
+      final userEntity = user?.toEntity();
+      return Right(userEntity);
     } catch (e) {
-      throw Exception('Error al obtener los roles del usuario: $e');
+      return Left(ServerFailure('Error al obtener el usuario actual'));
     }
   }
 }

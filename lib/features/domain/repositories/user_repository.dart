@@ -1,12 +1,17 @@
+import 'package:echo_fix/core/error/failure.dart';
 import 'package:echo_fix/features/domain/entities/users.dart';
 import 'package:echo_fix/features/domain/entities/user_role.dart';
+import 'package:fpdart/fpdart.dart';
 
 abstract class UserRepository {
-  Future<Users?> getCurrentUser();
+  Future<Either<Failure, Users?>> getCurrentUser();
 
-  Future<List<UserRole>> getUserRoles();
+  Future<Either<Failure, List<UserRole>>> getUserRoles();
 
-  Future<void> signIn({required String userName, required String password});
+  Future<Either<Failure, void>> signIn({
+    required String userName,
+    required String password,
+  });
 
-  Future<void> signOut();
+  Future<Either<Failure, void>> signOut();
 }

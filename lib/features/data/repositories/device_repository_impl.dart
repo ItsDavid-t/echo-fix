@@ -1,80 +1,69 @@
+import 'package:echo_fix/core/error/failure.dart';
+import 'package:echo_fix/features/data/datasources/device_remote_data_source_impl.dart';
 import 'package:echo_fix/features/data/models/device_model.dart';
 import 'package:echo_fix/features/domain/entities/device.dart';
 import 'package:echo_fix/features/domain/repositories/device_repository.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:fpdart/fpdart.dart';
 
 class DeviceRepositoryImpl implements DeviceRepository {
-  final SupabaseClient supabase;
-  DeviceRepositoryImpl({required this.supabase});
+  final DeviceRemoteDataSourceImpl remoteDataSource;
+  DeviceRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<void> addDevice(Device device) async {
+  Future<Either<Failure, void>> addDevice(Device device) async {
     try {
-      await supabase.from('device').insert({
-        'customer_id': device.customerId,
-        'name': device.deviceName,
-        'type': device.deviceType,
-        'inventory_number': device.deviceNumberID,
-        'image_url': device.deviceImage,
-        'created_at': device.createdAt,
-      });
+      final deviceModel = DeviceModel.fromEntity(device);
+      await remoteDataSource.addDevice(deviceModel);
+      return Right(null);
     } catch (e) {
-      throw Exception('Error al agregar el dispositivo: $e');
+      return Left(ServerFailure('Error al agregar el dispositivo: $e'));
     }
   }
 
   @override
-  Future<void> deleteDevice(int deviceId) async {
+  Future<Either<Failure, void>> deleteDevice(int deviceId) async {
     try {
-      await supabase.from('device').delete().eq('device_id', deviceId);
+      return remoteDataSource
+          .deleteDevice(deviceId)
+          .then((_) => const Right(null));
     } catch (e) {
-      throw Exception('Error al eliminar el dispositivo: $e');
+      return Left(ServerFailure('Error al eliminar el dispositivo: $e'));
     }
   }
 
   @override
-  Future<List<Device>> getAllDevices() async {
+  Future<Either<Failure, List<Device>>> getAllDevices() async {
     try {
-      final response = await supabase.from('device').select();
-      return response.map((json) => DeviceModel.fromJson(json)).toList();
+      final deviceModels = await remoteDataSource.getAllDevices();
+      final devices = deviceModels.map((model) => model.toEntity()).toList();
+      return Right(devices);
     } catch (e) {
-      throw Exception('Error al obtener los dispositivos: $e');
+      return Left(ServerFailure('Error al obtener los dispositivos: $e'));
     }
   }
 
   @override
-  Future<Device?> getDeviceByNumberInventary(String deviceNumberID) async {
+  Future<Either<Failure, Device?>> getDeviceByNumberInventory(
+    String deviceNumberID,
+  ) async {
     try {
-      final response = await supabase
-          .from('device')
-          .select()
-          .eq('inventory_number', deviceNumberID)
-          .maybeSingle();
-      if (response == null) {
-        return null;
-      }
-
-      return DeviceModel.fromJson(response);
+      final deviceModel = await remoteDataSource.getDeviceByNumberInventory(
+        deviceNumberID,
+      );
+      return Right(deviceModel?.toEntity());
     } catch (e) {
-      throw Exception('Error al obtener el dispositivo por ID: $e');
+      return Left(ServerFailure('Error al obtener el dispositivo: $e'));
     }
   }
 
   @override
-  Future<void> updateDevice(Device device) async {
+  Future<Either<Failure, void>> updateDevice(Device device) async {
     try {
-      await supabase
-          .from('device')
-          .update({
-            'customer_id': device.customerId,
-            'name': device.deviceName,
-            'type': device.deviceType,
-            'inventory_number': device.deviceNumberID,
-            'image_url': device.deviceImage,
-          })
-          .eq('device_id', device.deviceId);
+      final deviceModel = DeviceModel.fromEntity(device);
+      await remoteDataSource.updateDevice(deviceModel);
+      return Right(null);
     } catch (e) {
-      throw Exception('Error al actualizar el dispositivo: $e');
+      return Left(ServerFailure('Error al actualizar el dispositivo: $e'));
     }
   }
 }

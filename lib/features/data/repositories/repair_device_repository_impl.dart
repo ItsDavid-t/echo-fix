@@ -1,107 +1,93 @@
+import 'package:echo_fix/core/error/failure.dart';
+import 'package:echo_fix/features/data/datasources/repair_device_remote_data_source_impl.dart';
 import 'package:echo_fix/features/data/models/repair_device_model.dart';
 import 'package:echo_fix/features/domain/entities/repair_device.dart';
 import 'package:echo_fix/features/domain/repositories/repair_device_repository.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:fpdart/fpdart.dart';
 
 class RepairDeviceRepositoryImpl implements RepairDeviceRepository {
-  final SupabaseClient supabase;
+  final RepairDeviceRemoteDataSourceImpl remoteDataSource;
 
-  RepairDeviceRepositoryImpl({required this.supabase});
+  RepairDeviceRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<void> addRepairDevice(RepairDevice repairDevice) async {
+  Future<Either<Failure, void>> addRepairDevice(
+    RepairDevice repairDevice,
+  ) async {
     try {
-      await supabase.from('repair').insert({
-        'device_id': repairDevice.deviceId,
-        'responsable_id': repairDevice.userId,
-        'customer_id': repairDevice.customerId,
-        'status': repairDevice.repairStatus,
-        'created_at': repairDevice.repairDate.toIso8601String(),
-        'completed_at': repairDevice.repairCompletionDate?.toIso8601String(),
-        'problem_description': repairDevice.repairDescription,
+      final repairDeviceModel = RepairDeviceModel.fromEntity(repairDevice);
+      await remoteDataSource.addRepairDevice(repairDeviceModel);
+      return Right(null);
+    } catch (e) {
+      return Left(
+        ServerFailure('Error al agregar la reparacion del dispositivo '),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteRepairDevice(int repairId) async {
+    try {
+      return await remoteDataSource
+          .deleteRepairDevice(repairId)
+          .then((_) => Right(null));
+    } catch (e) {
+      return Left(
+        ServerFailure('Error al eliminar la reparacion del dispositivo $e'),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<RepairDevice>>> getAllRepairDevices() async {
+    try {
+      return await remoteDataSource.getAllRepairDevices().then((repairModels) {
+        final repairDevice = repairModels
+            .map((model) => model.toEntity())
+            .toList();
+        return Right(repairDevice);
       });
     } catch (e) {
-      throw Exception('Error al agregar la reparación: $e');
+      return Left(
+        ServerFailure('Error al obtener las reparaciones de los dispositivos'),
+      );
     }
   }
 
   @override
-  Future<void> deleteRepairDevice(int repairId) async {
+  Future<Either<Failure, List<RepairDevice>>> getRepairsByUser(
+    int userId,
+  ) async {
     try {
-      await supabase.from('repair').delete().eq('repair_id', repairId);
+      return await remoteDataSource.getRepairsByUser(userId).then((
+        repairModels,
+      ) {
+        final repairDevice = repairModels
+            .map((model) => model.toEntity())
+            .toList();
+        return Right(repairDevice);
+      });
     } catch (e) {
-      throw Exception('Error al eliminar la reparación: $e');
+      return Left(
+        ServerFailure(
+          'Error al obtener la repacaciones de los dispositivos por usuario',
+        ),
+      );
     }
   }
 
   @override
-  Future<List<RepairDevice>> getAllRepairDevices() async {
+  Future<Either<Failure, void>> updateRepairDevice(
+    RepairDevice repairDevice,
+  ) async {
     try {
-      final response = await supabase.from('repair_participants').select();
-
-      return response.map<RepairDevice>((repairs) {
-        return RepairDeviceModel(
-          repairId: repairs['repair_id'],
-          deviceId: repairs['device_id'],
-          userId: repairs['user_id'],
-          customerId: repairs['customer_id'],
-          repairStatus: repairs['status'],
-          repairDate: DateTime.parse(repairs['created_at']),
-          repairCompletionDate: repairs['completed_at'] != null
-              ? DateTime.parse(repairs['completed_at'])
-              : null,
-          repairDescription: repairs['description'],
-        );
-      }).toList();
+      final repairDeviceModel = RepairDeviceModel.fromEntity(repairDevice);
+      await remoteDataSource.updateRepairDevice(repairDeviceModel);
+      return Right(null);
     } catch (e) {
-      throw Exception('Error al obtener las reparaciones: $e');
-    }
-  }
-
-  @override
-  Future<void> updateRepairDevice(RepairDevice repairDevice) async {
-    try {
-      await supabase
-          .from('repair')
-          .update({
-            'device_id': repairDevice.deviceId,
-            'responsable_id': repairDevice.userId,
-            'customer_id': repairDevice.customerId,
-            'status': repairDevice.repairStatus,
-            'completed_at': repairDevice.repairCompletionDate
-                ?.toIso8601String(),
-            'problem_description': repairDevice.repairDescription,
-          })
-          .eq('repair_id', repairDevice.repairId);
-    } catch (e) {
-      throw Exception('Error al actualizar la reparación: $e');
-    }
-  }
-
-  @override
-  Future<List<RepairDevice>> getRepairsByUser(int userId) async {
-    try {
-      final response = await supabase
-          .from('repair_participants')
-          .select()
-          .eq('user_id', userId);
-
-      return response.map<RepairDevice>((repairs) {
-        return RepairDeviceModel(
-          repairId: repairs['repair_id'],
-          deviceId: repairs['device_id'],
-          userId: repairs['user_id'],
-          customerId: repairs['customer_id'],
-          repairStatus: repairs['status'],
-          repairDate: DateTime.parse(repairs['created_at']),
-          repairCompletionDate: repairs['completed_at'] != null
-              ? DateTime.parse(repairs['completed_at'])
-              : null,
-          repairDescription: repairs['description'],
-        );
-      }).toList();
-    } catch (e) {
-      throw Exception('Error al obtener las reparaciones del usuario: $e');
+      return Left(
+        ServerFailure('Error al actualizar la reparacion del dispositivo '),
+      );
     }
   }
 }

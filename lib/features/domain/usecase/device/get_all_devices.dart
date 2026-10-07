@@ -3,11 +3,12 @@ import 'package:echo_fix/features/domain/entities/device.dart';
 import 'package:echo_fix/features/domain/repositories/device_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
-class AddDevice {
+class GetAllDevices {
   final DeviceRepository repository;
-  const AddDevice(this.repository);
 
-  Future<Either<Failure, void>> call(Device device) async {
-    return await repository.addDevice(device);
+  const GetAllDevices(this.repository);
+
+  Future<Either<Failure, List<Device>>> call() async {
+    return await repository.getAllDevices();
   }
 }
