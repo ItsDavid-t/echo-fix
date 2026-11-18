@@ -1,4 +1,4 @@
-import 'package:echo_fix/presentation/pages/home_screen.dart';
+import 'package:echo_fix/presentation/pages/screens/home_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
 

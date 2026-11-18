@@ -36,7 +36,7 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<Either<Failure, void>> signOut() async {
     try {
-      return remoteDataSource.signOut().then((_) => const Right(null));
+      return await remoteDataSource.signOut().then((_) => const Right(null));
     } catch (e) {
       return Left(ServerFailure('Error al cerrar sesión'));
     }

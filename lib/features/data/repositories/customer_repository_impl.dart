@@ -50,7 +50,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
   Future<Either<Failure, void>> updateCustomer(Customer customer) async {
     try {
       final customerModel = CustomerModel.fromEntity(customer);
-      return remoteDataSource
+      return await remoteDataSource
           .updateCustomer(customerModel)
           .then((_) => const Right(null));
     } catch (e) {

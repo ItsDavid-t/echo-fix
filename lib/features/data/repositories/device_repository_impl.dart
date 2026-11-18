@@ -23,7 +23,7 @@ class DeviceRepositoryImpl implements DeviceRepository {
   @override
   Future<Either<Failure, void>> deleteDevice(int deviceId) async {
     try {
-      return remoteDataSource
+      return await remoteDataSource
           .deleteDevice(deviceId)
           .then((_) => const Right(null));
     } catch (e) {
